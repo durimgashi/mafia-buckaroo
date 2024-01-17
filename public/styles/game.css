@@ -1,0 +1,134 @@
+body {
+    background-color: #000;
+    color: #FFF;
+    font-family: Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+.d-none {
+    display: none !important;
+}
+
+body.day {
+    background-color: #FFF;
+    color: #000;
+}
+
+body.night .round, .role {
+    color: white;
+    font-size: 20px;
+}
+
+body.day .round, body.day .role {
+    color: black;
+    font-size: 20px;
+}
+
+.first-message {
+     text-align: center;
+}
+
+body.night .first-message {
+    color: white;
+}
+
+body.day .first-message {
+    color: black !important;
+}
+
+a.reset-game {
+    background: #CAD704;
+    color: black;
+    padding: 10px 30px;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+.card {
+    width: 100px;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    text-align: center;
+}
+
+body.night .card {
+    border: 2px solid #CAD704;
+    color: #CAD704;
+}
+
+.second-message.is_over {
+    font-size: 50px;
+}
+
+.card:not(.is_mafia):not(.is_me):hover {
+    cursor: pointer;
+}
+
+body.night .card:not(.is_mafia):not(.is_me):hover {
+    color: #000000 !important;
+    background: #CAD704;
+}
+
+body.day .card:not(.is_mafia):not(.is_me):hover {
+    color: #FFF !important;
+    background: #000;
+}
+
+body.day .card {
+    border: 2px solid;
+}
+
+.progress_messages .message {
+    font-size: 17px;
+    text-align: center;
+}
+
+.main-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: baseline;
+    margin-top: 5%;
+}
+
+.circle-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.circle-container .player-circle:nth-child(5) {
+    grid-column: span 3;
+}
+
+.circle-container .player-circle:nth-child(2),
+.circle-container .player-circle:nth-child(3) {
+    position: relative;
+    top: -85%;
+}
+
+.circle-container .player-circle:nth-child(8),
+.circle-container .player-circle:nth-child(9) {
+    position: relative;
+    top: 85%;
+}
+
+.circle-container .player-circle:nth-child(5) {
+    position: relative;
+    right: 15%;
+}
+
+.circle-container .player-circle:nth-child(6) {
+    position: relative;
+    right: -50%;
+}
+
