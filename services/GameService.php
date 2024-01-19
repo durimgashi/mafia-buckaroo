@@ -6,14 +6,14 @@ use Database\DB;
 
 class GameService extends DB {
     public static function resetGame() {
-        self::resetGameSession();
+        Session::resetGameSession();
     }
 
     public static function pickPlayer($data) {
         $action = $data['action'];
         $player_id = $data['player_id'];
 
-        $_SESSION['game']['progress_messages'] = [];
+        Session::resetProgressMessages();
 
         if (self::isNight()) {
             $players_before_kill = self::getActivePlayers();
@@ -62,7 +62,7 @@ class GameService extends DB {
         $player = self::getPlayerById($savedPlayerId);
 
         self::savePlayer($savedPlayerId);
-        self::setProgressInfo("The doctor has saved <strong><u>" . $player['full_name'] . "</u></strong>");
+        Session::setProgressInfo("The doctor has saved <strong><u>" . $player['full_name'] . "</u></strong>");
 
         return true;
     }
@@ -72,9 +72,9 @@ class GameService extends DB {
         $player = self::getPlayerById($player_id);
 
         if ($investigate) {
-            self::setProgressInfo($player['full_name'] . " <strong><u>is</u></strong> the mafia.");
+            Session::setProgressInfo($player['full_name'] . " <strong><u>is</u></strong> the mafia.");
         } else {
-            self::setProgressInfo($player['full_name'] . " <strong><u>is not</u></strong> the mafia.");
+            Session::setProgressInfo($player['full_name'] . " <strong><u>is not</u></strong> the mafia.");
         }
     }
 
@@ -88,9 +88,9 @@ class GameService extends DB {
             self::removePlayer($player_id);
             $removedPlayer = self::getPlayerById($player_id);
 
-            self::setProgressInfo(" The mafia chose to kill <strong><u>" . $removedPlayer['full_name'] . "</u></strong> who was a " . self::getPlayerRole($player_id) . ".");
+            Session::setProgressInfo(" The mafia chose to kill <strong><u>" . $removedPlayer['full_name'] . "</u></strong> who was a " . self::getPlayerRole($player_id) . ".");
         } else {
-            self::setProgressInfo(' No one was killed by the mafia.');
+            Session::setProgressInfo(' No one was killed by the mafia.');
         }
     }
 
@@ -100,14 +100,14 @@ class GameService extends DB {
         if ($vote) {
             self::removePlayer($player_id);
             $jailedPlayer = self::getPlayerById($player_id);
-            self::setProgressInfo("The village has jailed <strong><u>" . $jailedPlayer['full_name'] . "</u></strong> who was a " . self::getPlayerRole($player_id) . ".");
+            Session::setProgressInfo("The village has jailed <strong><u>" . $jailedPlayer['full_name'] . "</u></strong> who was a " . self::getPlayerRole($player_id) . ".");
         } else {
-            self::setProgressInfo('No one was jailed');
+            Session::setProgressInfo('No one was jailed');
         }
     }
 
     public static function isDoctorDead(): bool {
-        $allPlayers = $_SESSION['game']['players'];
+        $allPlayers = Session::getPlayers();
 
         foreach ($allPlayers as $player) {
             if ($player['role'] === 'Doctor' && $player['status'] === 'alive') {
@@ -116,14 +116,6 @@ class GameService extends DB {
         }
 
         return true;
-    }
-
-    private static function setProgressInfo($message) {
-        $_SESSION['game']['progress_messages'][] = $message;
-    }
-
-    private static function setSecondMessage($message) {
-        $_SESSION['game']['second_message'] = $message;
     }
 
     private static function investigatePlayer($player_id): bool {
@@ -143,7 +135,7 @@ class GameService extends DB {
 
     private static function mafiaVoteToKill($player_id = null) {
         $allPlayers = self::getKillList();
-        $currentUserId = $_SESSION['user']['user_id'];
+        $currentUserId = Session::getUserId();
 
         $votes = [];
 
@@ -193,7 +185,7 @@ class GameService extends DB {
 
         $votes = [$player_id];
         foreach ($active_players AS $player) {
-            if ($player['player_id'] === $_SESSION['user']['user_id'])
+            if ($player['player_id'] === Session::getUserId())
                 continue;
 
             $randomIndex = array_rand($active_players);
@@ -211,7 +203,7 @@ class GameService extends DB {
     }
 
     private static function getPlayerById($player_id) {
-        $players = $_SESSION['game']['players'];
+        $players = Session::getPlayers();
 
         foreach ($players as $player) {
             if ($player['player_id'] == $player_id) {
@@ -222,7 +214,7 @@ class GameService extends DB {
     }
 
     private static function getPlayerRole($player_id) {
-        $allPlayers = $_SESSION['game']['players'];
+        $allPlayers = Session::getPlayers();
 
         foreach ($allPlayers as $player) {
             if ($player['player_id'] == $player_id) {
@@ -234,12 +226,12 @@ class GameService extends DB {
     }
 
     private static function updatePlayerStatus($player_id, $status) {
-        $players = $_SESSION['game']['players'];
+        $players = Session::getPlayers();
 
         foreach ($players as &$player) {
             if ($player['player_id'] == $player_id) {
                 $player['status'] = $status;
-                $_SESSION['game']['players'] = $players;
+                Session::setPlayers($players);
             }
         }
     }
@@ -253,23 +245,19 @@ class GameService extends DB {
     }
 
     private static function getActivePlayers(): array {
-        return array_values(array_filter($_SESSION['game']['players'], function ($player) {
+        return array_values(array_filter(Session::getPlayers(), function ($player) {
             return isset($player['status']) && $player['status'] === 'alive';
         }));
     }
 
     private static function getKillList(): array {
-        return array_values(array_filter($_SESSION['game']['players'], function ($player) {
+        return array_values(array_filter(Session::getPlayers(), function ($player) {
             return isset($player['status']) && $player['status'] === 'alive' && $player['role'] != 'Mafia';
         }));
     }
 
-    private static function getAllPlayers(): array {
-        return $_SESSION['game']['players'];
-    }
-
     public static function isPlayerDead($player_id): bool {
-        $players = $_SESSION['game']['players'];
+        $players = Session::getPlayers();
 
         foreach ($players as $player) {
             if ($player['player_id'] == $player_id) {
@@ -282,19 +270,19 @@ class GameService extends DB {
 
     public static function initRound($new_game = false) {
         if ($new_game) 
-            self::resetGameSession();
+            Session::resetGameSession();
 
-        if ($_SESSION['ongoing_game'] && !$new_game) {
-            self::toggleGameCycle();
+        if (Session::isOngoingGame() && !$new_game) {
+            Session::toggleGameCycle();
         } else {
 
             $new_game_id = DB::create('INSERT INTO games(start_date) VALUES (NOW());');
-            $_SESSION['game']['game_id'] = $new_game_id;
+            Session::setGameId($new_game_id);
 
             $players = self::generateRoles();
 
             if($players) {
-                self::setGameSession($players);
+                Session::setGameSession($players);
                 // Not the most efficient way to insert data, but I am short on time
                 foreach ($players AS $player) {
                     $insert_query = "INSERT INTO participants(game_id, player_id, role_id) VALUES (?, ?, ?);";
@@ -303,53 +291,45 @@ class GameService extends DB {
             }
         }
 
-        $my_role = $_SESSION['user']['role'];
+        $my_role = Session::getMyRole();
 
         if(self::isNight()) {
             switch($my_role) {
                 case ROLES['VILLAGER']:
-                    self::setSecondMessage('Keep sleeping...');
+                    Session::setSecondMessage('Keep sleeping...');
                     break;
                 case ROLES['DOCTOR']:
-                    self::setSecondMessage('Save someone');
+                    Session::setSecondMessage('Save someone');
                     break;
                 case ROLES['COP']:
-                    self::setSecondMessage('Investigate someone');
+                    Session::setSecondMessage('Investigate someone');
                     break;
                 case ROLES['MAFIA']:
-                    self::setSecondMessage('Vote to kill someone');
+                    Session::setSecondMessage('Vote to kill someone');
                     break;
             }
         } else {
-            self::setSecondMessage('Cast your vote');
+            Session::setSecondMessage('Cast your vote');
         }
 
         if (self::areVillagersOutnumbered()) {
-            $_SESSION['game']['game_over'] = true;
-            $_SESSION['winners'] = 'Mafia';
-
-            self::setSecondMessage('Game Over');
-            self::setProgressInfo(' Mafia has outnumbered the villagers');
-            self::setProgressInfo(' Mafia Wins');
+            Session::setGameOver('Mafia');
+            Session::setProgressInfo(' Mafia has outnumbered the villagers');
+            Session::setProgressInfo(' Mafia Wins');
         }
 
         if (self::isAllMafiaDead()) {
-            $_SESSION['game']['game_over'] = true;
-            $_SESSION['winners'] = 'The Village';
-
-            self::setSecondMessage('Game Over');
-            self::setProgressInfo(' All the mafia are dead');
-            self::setProgressInfo(' The Village Wins');
+            Session::setGameOver('The Village');
+            Session::setProgressInfo(' All the mafia are dead');
+            Session::setProgressInfo(' The Village Wins');
         }
 
-        if (self::isPlayerDead($_SESSION['user']['user_id'])) {
-            $_SESSION['game']['game_over'] = true;
-
-            self::setSecondMessage('Game Over');
-            self::setProgressInfo('You have been killed!');
+        if (self::isPlayerDead(Session::getUserId())) {
+            Session::setGameOver();
+            Session::setProgressInfo('You have been killed!');
         }
 
-        return $_SESSION['game'];
+        return Session::getGame();
     }
 
 
@@ -375,14 +355,14 @@ class GameService extends DB {
                 'alive' AS status
             FROM RolesQuery JOIN PlayersQuery ON RolesQuery.row_num = PlayersQuery.row_num;";
 
-        return DB::fetchMany($query, $_SESSION['user']['user_id']);
+        return DB::fetchMany($query, Session::getUserId());
     }
 
     private static function countPlayers(): array {
         $mafiaCount = 0;
         $otherCount = 0;
 
-        $players = self::getAllPlayers();
+        $players = Session::getPlayers();
 
         foreach ($players as $player) {
             if ($player['status'] === 'alive') {
@@ -407,51 +387,7 @@ class GameService extends DB {
         return $mafiaCount === 0;
     }
 
-
     private static function isNight(): bool {
-        return $_SESSION['game']['cycle'] == 'night';
-    }
-
-    private static function toggleGameCycle() {
-        if ($_SESSION['game']['cycle'] == "night")
-            $_SESSION['game']['cycle'] = "day";
-        else 
-            $_SESSION['game']['cycle'] = "night";
-
-        $_SESSION['game']['round']++;
-    }
-
-    private static function setGameSession($players) {
-        $my_role = [];
-
-        foreach ($players AS $player) {
-            if($player['is_bot'] == "0") {
-                $my_role['role'] = $player['role'];
-            }
-        }
-
-        $_SESSION['ongoing_game'] = true;
-        $_SESSION['winners'] = '';
-        $_SESSION['user']['role'] = $my_role['role'];
-        $_SESSION['game'] = [
-            'game_over' => false,
-            'cycle' => 'night',
-            'round' => 1,
-            'players' => $players,
-            'second_message' => '',
-            'progress_messages' => [],
-            'fellow_mafia' => []
-        ];
-
-        if ($my_role['role'] === 'Mafia') {
-            $_SESSION['game']['fellow_mafia'] = array_values(array_filter($_SESSION['game']['players'], function ($player) {
-                return $player['role'] === 'Mafia';
-            }));
-        }
-    }
-
-    public static function resetGameSession() {
-        $_SESSION['ongoing_game'] = false;
-        $_SESSION['game'] = [];
+        return Session::getCycle() == 'night';
     }
 }
