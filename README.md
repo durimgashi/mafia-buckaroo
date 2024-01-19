@@ -38,6 +38,42 @@ If you would prefer to run the application without using docker, then you will n
     php -S 127.0.0.1:5555 index.php
 ```
 
+# Game Instructions
+
+Upon launching the application, you will be prompted to provide user login information. If you lack a user account, simply navigate to the Register link to create one. After successfully creating a user, you will be redirected to the login page. Log in with your new credentials to access a page featuring two buttons.
+
+- Start Game: Initiates a new Mafia game.
+- Change Player: Logs out the current user, redirecting to the login page.
+## In-Game Dynamics
+This game comprises 10 players, including the user and 9 bots. Roles are randomly assigned upon starting a new Mafia game:
+
+- Villager (5)
+- Mafia (3)
+- Doctor (1)
+- Cop (1)
+
+## Day Cycle
+
+During the Day cycle, players cast votes to identify potential Mafia members. If a clear quorum is reached for a certain player, they are jailed and removed from the game.
+
+## Night Cycle
+
+Different actions occur based on roles:
+
+- Mafia: Votes to eliminate a player; if a quorum is reached, the player is removed.
+- Doctor: Can save a player from Mafia elimination, including themselves.
+- Cop: Investigates a player's Mafia affiliation.
+- Villagers: Observe as other roles take action.
+
+## Game Conclusion Criteria
+
+The game reaches its conclusion under the following circumstances:
+
+- The logged-in user is eliminated by the Mafia.
+- The Mafia outnumbers the other roles.
+- All Mafia members are eliminated.
+
+
 
 
 
