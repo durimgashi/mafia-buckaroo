@@ -39,7 +39,7 @@ const initHandlers = async () => {
                 return alert(response.message)
             } 
 
-            return window.location.reload()
+            return window.location.href = '/'
 
         } else {
             return alert("Please fill in all fields.");
