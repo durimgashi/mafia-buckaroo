@@ -2,12 +2,13 @@
 
 namespace Services;
 
-use Utils\DatabaseConnection;
+use Database\DB;
 
-class AuthService extends DatabaseConnection {
+class AuthService extends DB{
+
     public static function registerPlayer($data) {
         $query = "SELECT COUNT(*) AS count FROM players WHERE username = ?";
-        $exists = DatabaseConnection::fetchOne($query, $data['username']);
+        $exists = DB::fetchOne($query, $data['username']);
 
         $exists = (boolean)$exists['count'];
 
@@ -18,20 +19,21 @@ class AuthService extends DatabaseConnection {
             $valid_password = self::validatePassword($data['password']);
 
             if ($valid_password != null) {
-                return [
-                    'error' => true,
-                    'message' => $valid_password
-                ];
+                throw new \Error($valid_password);
+            }
+
+            $valid_username = self::validateUsername($username);
+
+            if ($valid_username != null) {
+                throw new \Error($valid_username);
             }
 
             $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
-
             $insert_query = "INSERT INTO players (full_name, username, password) VALUES (?, ?, ?);";
-
-            $created = DatabaseConnection::create($insert_query, $fullName, $username, $hashedPassword);
+            $created = DB::create($insert_query, $fullName, $username, $hashedPassword);
 
             if($created) {
-                $user_id = DatabaseConnection::fetchOne("SELECT id AS user_id FROM players WHERE username = ?", $username)['user_id'];
+                $user_id = DB::fetchOne("SELECT id AS user_id FROM players WHERE username = ?", $username)['user_id'];
 
                 self::setAuthSessions($user_id, $username, $fullName);
 
@@ -40,17 +42,10 @@ class AuthService extends DatabaseConnection {
                     'message' => "Player has been created"
                 ];
             } else {
-                return [
-                    'error' => true,
-                    'message' => "Failed to create user"
-                ];
+                throw new \Error("Failed to create user");
             }
-
         } else {
-            return [
-                'error' => true,
-                'message' => "This username is not available"
-            ];
+            throw new \Error("This username is not available");
         }
     }
 
@@ -60,7 +55,7 @@ class AuthService extends DatabaseConnection {
         
         // Can't login in as the default players, the Star Wars characters
         $query = "SELECT * FROM players WHERE username = ? AND is_bot = 0";
-        $user_data = DatabaseConnection::fetchOne($query, $username);
+        $user_data = DB::fetchOne($query, $username);
 
         if ($user_data) {
             if (password_verify($password, $user_data['password'])) {
@@ -71,16 +66,10 @@ class AuthService extends DatabaseConnection {
                     'message' => "Login successful"
                 ];
             } else {
-                return [
-                    'error' => true,
-                    'message' => "Incorrect password"
-                ];
+                throw new \Error('Invalid username or password');
             }
         } else {
-            return [
-                'error' => true,
-                'message' => "User not found"
-            ];
+            throw new \Error('User not found');
         }
     }
 
@@ -100,7 +89,20 @@ class AuthService extends DatabaseConnection {
         return null;
     }
 
-    public static function setAuthSessions($user_id, $fullName, $username) {
+    private static function validateUsername($username): ?string {
+        if (empty($username)) {
+            return "Username cannot be empty.";
+        }
+    
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+            return "Username can only contain letters, numbers, and underscores.";
+        }
+    
+        return null;
+    }
+    
+
+    public static function setAuthSessions($user_id, $username, $fullName) {
         session_regenerate_id(true);
 
         $_SESSION['user']['user_id'] = $user_id;
@@ -109,5 +111,4 @@ class AuthService extends DatabaseConnection {
         $_SESSION['ongoing_game'] = false;
         $_SESSION['game'] = [];
     }
-
 }

@@ -10,7 +10,8 @@ class GameController extends Controller
 {
     public function __construct() {
         if (!$this->isLoggedIn()) {
-            $this->render('auth/login');
+            header('Location: /');
+            die();
         }
     }
 

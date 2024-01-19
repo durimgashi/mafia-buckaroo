@@ -37,13 +37,16 @@ class AuthController extends Controller
     }
 
 
-    public function login_player() { 
-        $data = file_get_contents("php://input");
+    public function login_player() {
+        try {
+            $data = file_get_contents("php://input");
+            $data = $this->secure_json_input($data);
+            $data = json_decode($data, true);
 
-        $data = $this->secure_json_input($data);
-        $data = json_decode($data, true);
-
-        $this->jsonResponse(AuthService::loginPlayer($data));
+            $this->jsonResponse(AuthService::loginPlayer($data));
+        } catch (\Error $e) {
+            $this->jsonResponse($this->generalError($e->getMessage()));
+        }
     }
 
 

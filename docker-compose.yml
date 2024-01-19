@@ -7,14 +7,11 @@ services:
       dockerfile: mysql.Dockerfile
     ports:
       - "3307:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mafia
-      MYSQL_USER: guest
-      MYSQL_PASSWORD: guest123
     networks:
       - mafia_network
     container_name: mysql-container
+    env_file:
+      - mysql.env
 
   php:
     build:
@@ -29,6 +26,8 @@ services:
       - mysql
     volumes:
       - .:/var/www/html
+    env_file:
+      - php.env
 
 networks:
   mafia_network:

@@ -1,11 +1,11 @@
-const nightMessage = "Night fell on the city..."
-const dayMessage = "The sun rose over the city..."
+const nightMessage = "Night fell on the village..."
+const dayMessage = "The sun rose over the village..."
 
 const ROLES = {
     COP: 'Cop',
     DOCTOR: 'Doctor',
     MAFIA: 'Mafia',
-    TOWNSPERSON: 'Townsperson'
+    VILLAGER: 'Villager'
 }
 
 const ACTION = {
@@ -47,7 +47,7 @@ const pickPlayer = async (player_id) => {
     if (cycle === DAY) {
         response = await nextRound(player_id, ACTION.VOTE)
     } else if (cycle === NIGHT) {
-        if(myRole === ROLES.TOWNSPERSON) {
+        if(myRole === ROLES.VILLAGER) {
             response = await nextRound(player_id, ACTION.KILL)
         } else if (myRole === ROLES.DOCTOR) {
             response = await nextRound(player_id, ACTION.SAVE)
@@ -79,8 +79,10 @@ const initializeGame = async (new_data) => {
         data = new_data
     } else {
         data = await startGame()
-        shuffleArray(data.players)
+        // shuffleArray(data.players)
     }
+    
+    data.players = data.players.sort((a, b) => parseInt(a.player_id) - parseInt(b.player_id))
 
     toggleCycle(data.cycle)
 
@@ -110,7 +112,15 @@ const initializeGame = async (new_data) => {
 
         if (e.is_bot === '0') {
             myRole = e.role
-            additional_classes += ' is_me'
+
+            if (myRole === ROLES.DOCTOR) {
+                if (cycle === DAY)
+                    additional_classes += ' is_me'
+            } else {
+                additional_classes += ' is_me'
+            }
+
+
             $('body .role').text(`Role: ${myRole}`)
         }
 
@@ -123,7 +133,7 @@ const initializeGame = async (new_data) => {
 
 
 
-    if (myRole === ROLES.TOWNSPERSON && data.cycle === NIGHT) {
+    if (myRole === ROLES.VILLAGER && data.cycle === NIGHT) {
         setTimeout(async () => {
             await pickPlayer(null)
         }, 4000)
@@ -133,7 +143,7 @@ const initializeGame = async (new_data) => {
 const initHandlers = async () => {
     $('body').on('click', '.player-circle:not(.is_mafia):not(.is_me)', async (e) => {
 
-        if (myRole === ROLES.TOWNSPERSON && cycle === NIGHT)
+        if (myRole === ROLES.VILLAGER && cycle === NIGHT)
             return alert("Hmm impatient you are")
 
         let player_id = $(e.currentTarget).attr('data-player-id')

@@ -7,6 +7,5 @@ error_reporting(E_ALL);
 session_start();
 
 include __DIR__ . '/vendor/autoload.php';
-include __DIR__ . '/utils/helpers.php';
 include __DIR__ . '/utils/constants.php';
 include __DIR__ . '/routes/Router.php';

@@ -2,16 +2,11 @@
 
 namespace Services;
 
-use Utils\DatabaseConnection;
+use Database\DB;
 
-class GameService extends DatabaseConnection {
-
+class GameService extends DB {
     public static function resetGame() {
         self::resetGameSession();
-    }
-
-    public static function getThirdMessage(): string {
-        return $_SESSION['game']['third_message'] . "<br>";
     }
 
     public static function pickPlayer($data) {
@@ -36,7 +31,7 @@ class GameService extends DatabaseConnection {
             }
         } else {
             if ($action == 'vote') {
-                self::handleTownVote($player_id);
+                self::handleVillageVote($player_id);
             }
         }
 
@@ -99,13 +94,13 @@ class GameService extends DatabaseConnection {
         }
     }
 
-    public static function handleTownVote($player_id) {
+    public static function handleVillageVote($player_id) {
         $vote = self::votePlayer($player_id);
 
         if ($vote) {
             self::removePlayer($player_id);
             $jailedPlayer = self::getPlayerById($player_id);
-            self::setProgressInfo("The town has jailed <strong><u>" . $jailedPlayer['full_name'] . "</u></strong> who was a " . self::getPlayerRole($player_id) . ".");
+            self::setProgressInfo("The village has jailed <strong><u>" . $jailedPlayer['full_name'] . "</u></strong> who was a " . self::getPlayerRole($player_id) . ".");
         } else {
             self::setProgressInfo('No one was jailed');
         }
@@ -189,7 +184,6 @@ class GameService extends DatabaseConnection {
             return false;
         }
     }
-
 
     private static function votePlayer($player_id) {
         $active_players = self::getActivePlayers();
@@ -287,13 +281,25 @@ class GameService extends DatabaseConnection {
     }
 
     public static function initRound($new_game = false) {
+        if ($new_game) 
+            self::resetGameSession();
+
         if ($_SESSION['ongoing_game'] && !$new_game) {
             self::toggleGameCycle();
         } else {
+
+            $new_game_id = DB::create('INSERT INTO games(start_date) VALUES (NOW());');
+            $_SESSION['game']['game_id'] = $new_game_id;
+
             $players = self::generateRoles();
 
             if($players) {
                 self::setGameSession($players);
+                // Not the most efficient way to insert data, but I am short on time
+                foreach ($players AS $player) {
+                    $insert_query = "INSERT INTO participants(game_id, player_id, role_id) VALUES (?, ?, ?);";
+                    DB::create($insert_query, $new_game_id, $player['player_id'], $player['role_id']);
+                }
             }
         }
 
@@ -301,7 +307,7 @@ class GameService extends DatabaseConnection {
 
         if(self::isNight()) {
             switch($my_role) {
-                case ROLES['TOWNSPERSON']:
+                case ROLES['VILLAGER']:
                     self::setSecondMessage('Keep sleeping...');
                     break;
                 case ROLES['DOCTOR']:
@@ -318,22 +324,22 @@ class GameService extends DatabaseConnection {
             self::setSecondMessage('Cast your vote');
         }
 
-        if (self::isTownOutnumbered()) {
+        if (self::areVillagersOutnumbered()) {
             $_SESSION['game']['game_over'] = true;
             $_SESSION['winners'] = 'Mafia';
 
             self::setSecondMessage('Game Over');
-            self::setProgressInfo(' Mafia has outnumbered the townspeople');
+            self::setProgressInfo(' Mafia has outnumbered the villagers');
             self::setProgressInfo(' Mafia Wins');
         }
 
-        if (self::isMafiaOutnumbered()) {
+        if (self::isAllMafiaDead()) {
             $_SESSION['game']['game_over'] = true;
-            $_SESSION['winners'] = 'The Town';
+            $_SESSION['winners'] = 'The Village';
 
             self::setSecondMessage('Game Over');
-            self::setProgressInfo(' The Town has outnumbered the mafia');
-            self::setProgressInfo(' The Town Wins');
+            self::setProgressInfo(' All the mafia are dead');
+            self::setProgressInfo(' The Village Wins');
         }
 
         if (self::isPlayerDead($_SESSION['user']['user_id'])) {
@@ -369,7 +375,7 @@ class GameService extends DatabaseConnection {
                 'alive' AS status
             FROM RolesQuery JOIN PlayersQuery ON RolesQuery.row_num = PlayersQuery.row_num;";
 
-        return DatabaseConnection::fetchMany($query, $_SESSION['user']['user_id']); 
+        return DB::fetchMany($query, $_SESSION['user']['user_id']);
     }
 
     private static function countPlayers(): array {
@@ -391,23 +397,19 @@ class GameService extends DatabaseConnection {
         return [$mafiaCount, $otherCount];
     }
 
-    private static function isTownOutnumbered(): bool {
+    private static function areVillagersOutnumbered(): bool {
        [$mafiaCount, $otherCount] = self::countPlayers();
         return $otherCount < $mafiaCount;
     }
 
-    private static function isMafiaOutnumbered(): bool {
+    private static function isAllMafiaDead(): bool {
         [$mafiaCount, $otherCount] = self::countPlayers();
-        return $otherCount > $mafiaCount && $mafiaCount == 1;
+        return $mafiaCount === 0;
     }
 
 
     private static function isNight(): bool {
         return $_SESSION['game']['cycle'] == 'night';
-    }
-
-    private static function isDay(): bool {
-        return $_SESSION['game']['cycle'] == 'day';
     }
 
     private static function toggleGameCycle() {
@@ -431,19 +433,20 @@ class GameService extends DatabaseConnection {
         $_SESSION['ongoing_game'] = true;
         $_SESSION['winners'] = '';
         $_SESSION['user']['role'] = $my_role['role'];
-        $_SESSION['game']['game_over'] = false;
-        $_SESSION['game']['cycle'] = 'day';
-        $_SESSION['game']['round'] = 1;
-        $_SESSION['game']['players'] = $players;
-        $_SESSION['game']['second_message'] = '';
-        $_SESSION['game']['progress_messages'] = [];
+        $_SESSION['game'] = [
+            'game_over' => false,
+            'cycle' => 'night',
+            'round' => 1,
+            'players' => $players,
+            'second_message' => '',
+            'progress_messages' => [],
+            'fellow_mafia' => []
+        ];
 
         if ($my_role['role'] === 'Mafia') {
             $_SESSION['game']['fellow_mafia'] = array_values(array_filter($_SESSION['game']['players'], function ($player) {
                 return $player['role'] === 'Mafia';
             }));
-        } else {
-            $_SESSION['game']['fellow_mafia'] = [];
         }
     }
 

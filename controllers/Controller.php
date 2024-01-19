@@ -55,16 +55,22 @@ class Controller
         }
     }
 
-    protected function render($viewFile, $data = [])
-    {
+    protected function render($viewFile, $data = []) {
         extract($data);
         include_once(__DIR__ . '/../public/views/' . $viewFile . '.php');
     }
 
-    protected function jsonResponse($data)
-    {
+    protected function jsonResponse($data) {
         header('Content-Type: application/json');
         echo json_encode($data);
         die();
+    }
+
+    protected function generalError($message) {
+//        http_response_code(400);
+        return [
+            'error' => true,
+            'message' => $message
+        ];
     }
 }

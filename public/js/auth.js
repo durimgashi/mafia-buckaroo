@@ -31,6 +31,8 @@ const initHandlers = async () => {
 
         if (data.username && data.password) {
             let response = await login(data)
+
+            console.log(response)
         
 
             if(response.error) {

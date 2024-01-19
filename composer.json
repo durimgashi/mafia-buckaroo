@@ -5,7 +5,7 @@
         "psr-4": {
             "Controllers\\": "controllers/",
             "Services\\": "services/",
-            "Utils\\": "utils/"
+            "Database\\": "database/"
         }
     },
     "authors": [

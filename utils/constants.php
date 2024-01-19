@@ -1,20 +1,15 @@
 <?php
 
-
-const DB_HOST = 'mysql';
-const DB_PORT = 3306;
-const DB_NAME = 'mafia';
-//const DB_USERNAME = 'root';
-//const DB_PASSWORD = 'root';
-
-const DB_USERNAME = 'guest';
-const DB_PASSWORD = 'guest123';
-
+define('DB_HOST', getenv('DB_HOST'));
+define('DB_PORT', getenv('DB_PORT'));
+define('DB_NAME', getenv('DB_NAME'));
+define('DB_USERNAME', getenv('DB_USERNAME'));
+define('DB_PASSWORD', getenv('DB_PASSWORD'));
 
 
 const ROLES = [
     'COP' => 'Cop',
     'DOCTOR' => 'Doctor',
     'MAFIA' => 'Mafia',
-    'TOWNSPERSON' => 'Townsperson'
+    'VILLAGER' => 'Villager'
 ];
