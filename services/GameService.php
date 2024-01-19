@@ -275,14 +275,11 @@ class GameService extends DB {
         if (Session::isOngoingGame() && !$new_game) {
             Session::toggleGameCycle();
         } else {
-
             $new_game_id = DB::create('INSERT INTO games(start_date) VALUES (NOW());');
-            Session::setGameId($new_game_id);
-
             $players = self::generateRoles();
 
             if($players) {
-                Session::setGameSession($players);
+                Session::setGameSession($new_game_id, $players);
                 // Not the most efficient way to insert data, but I am short on time
                 foreach ($players AS $player) {
                     $insert_query = "INSERT INTO participants(game_id, player_id, role_id) VALUES (?, ?, ?);";
@@ -313,19 +310,19 @@ class GameService extends DB {
         }
 
         if (self::areVillagersOutnumbered()) {
-            Session::setGameOver('Mafia');
-            Session::setProgressInfo(' Mafia has outnumbered the villagers');
-            Session::setProgressInfo(' Mafia Wins');
+            Session::setGameOver('The Mafia');
+            Session::setProgressInfo('Mafia has outnumbered the villagers');
+            Session::setProgressInfo('Mafia Wins');
         }
 
         if (self::isAllMafiaDead()) {
             Session::setGameOver('The Village');
-            Session::setProgressInfo(' All the mafia are dead');
-            Session::setProgressInfo(' The Village Wins');
+            Session::setProgressInfo('All the mafia are dead');
+            Session::setProgressInfo('The Village Wins');
         }
 
         if (self::isPlayerDead(Session::getUserId())) {
-            Session::setGameOver();
+            Session::setGameOver('The Mafia');
             Session::setProgressInfo('You have been killed!');
         }
 

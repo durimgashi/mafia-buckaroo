@@ -1,9 +1,10 @@
 <?php
 
 namespace Services;
+use Database\DB;
 
 
-class Session {
+class Session extends DB {
 
     public static function getGame() {
         return $_SESSION['game'];
@@ -21,11 +22,18 @@ class Session {
         $_SESSION['game']['game_over'] = true;
         $_SESSION['winners'] = $winners;
 
+        DB::raw("UPDATE games SET end_date = NOW(), winners = ? WHERE id = ?", $winners, self::getGameId());
+
         self::setSecondMessage('Game Over');
     }
 
     public static function isOngoingGame() {
         return $_SESSION['ongoing_game'];
+    }
+
+
+    public static function getGameId() {
+        return $_SESSION['game']['game_id'];
     }
 
     public static function setGameId($id) {
@@ -65,7 +73,7 @@ class Session {
         $_SESSION['game']['round']++;
     }
 
-    public static function setGameSession($players) {
+    public static function setGameSession($new_game_id, $players) {
         $my_role = [];
 
         foreach ($players AS $player) {
@@ -78,6 +86,7 @@ class Session {
         $_SESSION['winners'] = '';
         $_SESSION['user']['role'] = $my_role['role'];
         $_SESSION['game'] = [
+            'game_id' => $new_game_id,
             'game_over' => false,
             'cycle' => 'night',
             'round' => 1,
@@ -95,6 +104,7 @@ class Session {
     }
 
     public static function resetGameSession() {
+        DB::raw('DELETE FROM games WHERE winners IS NULL AND end_date IS NULL');
         $_SESSION['ongoing_game'] = false;
         $_SESSION['game'] = [];
     }

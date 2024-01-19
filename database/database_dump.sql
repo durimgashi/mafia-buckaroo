@@ -46,7 +46,7 @@ CREATE TABLE `games` (
      `id` int(11) NOT NULL AUTO_INCREMENT,
      `start_date` datetime DEFAULT NULL,
      `end_date` datetime DEFAULT NULL,
-     `winners` ENUM('The Village', 'Mafia'),
+     `winners` VARCHAR(64),
      PRIMARY KEY (`id`)
 );
 
@@ -63,5 +63,5 @@ CREATE TABLE `participants` (
     KEY `game_id` (`role_id`),
     CONSTRAINT `participants_ibfk_1` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`),
     CONSTRAINT `participants_ibfk_2` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`),
-    CONSTRAINT `participants_ibfk_3` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`)
+    CONSTRAINT `participants_ibfk_3` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE
 );
