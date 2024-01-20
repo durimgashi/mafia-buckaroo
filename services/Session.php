@@ -7,8 +7,70 @@ use Database\DB;
 class Session extends DB {
 
     public static function getGame() {
-        return $_SESSION['game'];
+
+        // Cheating prevention
+        // Need to hide the roles of the players, so that they are not accessible from the front end
+        // Only the current player's role will be returned, and the role of the other maifia if the player is the mafia
+
+        $game = $_SESSION['game'];
+        $players = $game['players'];
+
+        $my_role = self::getMyRole();
+
+        $filtered_players = [];
+
+        if ($my_role === ROLES['MAFIA']) {
+            foreach ($players AS $player) {
+
+                if ($player['role'] === ROLES['MAFIA'] ) {
+                    $sanitized = [
+                        "player_id" => $player['player_id'],
+                        "is_bot" => $player['is_bot'],
+                        "full_name" => $player['full_name'],
+                        "status" => $player['status'],
+                        "role" => $player['role'],
+                        "role_id" => $player['role_id']
+                    ];
+                } else {
+                    $sanitized = [
+                        "player_id" => $player['player_id'],
+                        "is_bot" => $player['is_bot'],
+                        "full_name" => $player['full_name'],
+                        "status" => $player['status'],
+                    ];
+                }
+
+                $filtered_players[] = $sanitized; 
+            }
+        } else {
+            foreach ($players AS $player) { 
+                if ($player['is_bot'] == '1') {
+                    $sanitized = [
+                        "player_id" => $player['player_id'],
+                        "is_bot" => $player['is_bot'],
+                        "full_name" => $player['full_name'],
+                        "status" => $player['status'],
+                    ];
+                } else {
+                    $sanitized = [
+                        "player_id" => $player['player_id'],
+                        "is_bot" => $player['is_bot'],
+                        "full_name" => $player['full_name'],
+                        "status" => $player['status'],
+                        "role" => $player['role'],
+                        "role_id" => $player['role_id']
+                    ];
+                }
+
+                $filtered_players[] = $sanitized;
+            }
+        }
+
+        $game['players'] = $filtered_players;
+
+        return $game;
     }
+    
 
     public static function getUserId() {
         return $_SESSION['user']['user_id'];
