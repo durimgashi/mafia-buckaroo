@@ -136,7 +136,7 @@ const initializeGame = async (new_data) => {
     if (myRole === ROLES.VILLAGER && data.cycle === NIGHT) {
         setTimeout(async () => {
             await pickPlayer(null)
-        }, 4000)
+        }, 3000)
     }
 }
 

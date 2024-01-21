@@ -11,7 +11,8 @@ body {
 }
 
 body .is_mafia {
-    background: red !important;
+    /*background: red !important;*/
+    border: 7px solid !important;
 }
 
 nav {

@@ -1,4 +1,21 @@
-## Application Setup (Using Docker)
+## Project Information
+
+In this project, I have employed a self-developed structure that incorporates a custom routing mechanism. Routes are defined in the `./routes/routes.php` file, where endpoints are specified as follows:
+
+```php
+$routes = [
+    'test' => [
+        'controller' => 'TestController',
+        'method' => 'testMethod',
+        'http_method' => 'GET'
+    ],
+    // Additional routes...
+];
+````
+These routes are dispatched by the `./routes/Router.php` file.
+The application entry point is the `index.php` file in the root of the project.
+
+## Running the Application Using Docker
 
 As a prerequisite to running the application this way, you will need to have `docker` and `docker-compose` installed.
 
@@ -24,7 +41,7 @@ To stop the application and remove the containers, run:
 
 ---
 
-## Application Setup (Without Docker)
+## Running the Application without Docker
 
 If you would prefer to run the application without using docker, then you will need to follow a few steps:
 
@@ -40,7 +57,7 @@ If you would prefer to run the application without using docker, then you will n
 
 # Game Instructions
 
-Upon launching the application, you will be prompted to provide user login information. If you lack a user account, simply navigate to the Register link to create one. After successfully creating a user, you will be redirected to the login page. Log in with your new credentials to access a page featuring two buttons.
+Upon launching the application, you will be prompted to provide user login information. If you don't have a user account, simply navigate to the Register link to create one. After successfully creating a user, you will be automatically be logged in with your new user. Next, you will be presented with a page featuring two buttons:
 
 - Start Game: Initiates a new Mafia game.
 - Change Player: Logs out the current user, redirecting to the login page.
